@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Toulouse">
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3014/3014482.png">
+<link rel="apple-touch-icon" href="icon.png">
 <link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css"></noscript>
 <style>
@@ -1961,6 +1961,36 @@ if ('serviceWorker' in navigator) {
     }).catch(err => console.log('Lỗi đăng ký Service Worker:', err));
 
     // Ép tải lại trang khi bản mới chiếm quyền
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+  });
+}
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      console.log('Đã đăng ký Service Worker thành công!');
+      
+      // Lắng nghe nếu có bản cài đặt mới (bạn vừa đổi version trong sw.js)
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // Phát hiện có bản mới! Bắn thông báo bắt nhân viên tải lại
+            if (confirm("✨ Sếp vừa tung ra phiên bản App mới xịn hơn! Bấm OK để cập nhật ngay.")) {
+              window.location.reload();
+            }
+          }
+        });
+      });
+    }).catch(err => console.log('Lỗi đăng ký Service Worker:', err));
+
+    // Lắng nghe sự kiện "chiếm quyền" của bản cập nhật để tự động F5
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (refreshing) return;
